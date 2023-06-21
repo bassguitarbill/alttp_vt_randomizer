@@ -23,3 +23,6 @@
 /.vs
 *.sfc
 *.smc
+
+main
+base.sfc
