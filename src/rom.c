@@ -4,6 +4,7 @@
 
 #include "./rom.h"
 
+#define streq(x, y) (0 == strcmp(x, y))
 #define ROM_SIZE 2097152
 
 void rom_write(Rom* rom, int offset, unsigned char data[], int data_size) {
@@ -46,13 +47,13 @@ Rom* construct_rom(char* source_location) {
 void rom_set_heart_colors(Rom* rom, char* color) {
   char byte;
   char file_byte;
-  if (strcmp(color, "blue") == 0) {
+  if (streq(color, "blue")) {
     byte = 0x2C;
     file_byte = 0x0D;
-  } else if (strcmp(color, "green") == 0) {
+  } else if (streq(color, "green")) {
     byte = 0x3C;
     file_byte = 0x19;
-  } else if (strcmp(color, "yellow") == 0) {
+  } else if (streq(color, "yellow")) {
     byte = 0x28;
     file_byte = 0x09;
   } else {
@@ -72,6 +73,29 @@ void rom_set_heart_colors(Rom* rom, char* color) {
   rom_write(rom, 0x6FA30, &byte, 1);
 
   rom_write(rom, 0x65561, &file_byte, 1);
+}
+
+void rom_set_heart_beep_speed(Rom* rom, char* setting) {
+  char byte;
+  if (streq(setting, "off")) {
+    byte = 0x00;
+  } else if (streq(setting, "half")) {
+    byte = 0x40;
+  } else if (streq(setting, "quarter")) {
+    byte = 0x80;
+  } else if (streq(setting, "double")) {
+    byte = 0x10;
+  } else {
+    byte = 0x20;
+  }
+    
+  rom_write(rom, 0x180033, &byte, 1);
+}
+
+void rom_set_quick_swap(Rom* rom, bool enable) {
+  char byte = enable ? 0x01 : 0x00; // Probably unnecessary
+
+  rom_write(rom, 0x18004B, &byte, 1);
 }
 
 void rom_correct_checksum(Rom* rom) {
@@ -100,7 +124,7 @@ void rom_correct_checksum(Rom* rom) {
   rom_write(rom, 0x7FDC, checksum_data, 4);
 }
 
-void rom_save (Rom* rom, char* output_path) {
+void rom_save(Rom* rom, char* output_path) {
   fseek(rom->tmp_file, 0L, SEEK_END);
   long output_size = ftell(rom->tmp_file);
   rewind(rom->tmp_file);
