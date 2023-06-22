@@ -1,6 +1,9 @@
 #include "./rom.h"
 
 int main() {
-  Rom* r = construct_rom("base.sfc");
+  Rom* rom = construct_rom("base.sfc");
+  rom_set_heart_colors(rom, "green");
+  rom_correct_checksum(rom);
+  rom_save(rom, "output.sfc");
   return 0;
 }
