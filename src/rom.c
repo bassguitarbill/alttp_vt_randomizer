@@ -92,8 +92,8 @@ void rom_set_heart_beep_speed(Rom* rom, char* setting) {
   rom_write(rom, 0x180033, &byte, 1);
 }
 
-void rom_set_quick_swap(Rom* rom, bool enable) {
-  char byte = enable ? 0x01 : 0x00; // Probably unnecessary
+void rom_set_quick_swap(Rom* rom, char* enable) {
+  char byte = streq("true", enable) ? 0x01 : 0x00;
 
   rom_write(rom, 0x18004B, &byte, 1);
 }
