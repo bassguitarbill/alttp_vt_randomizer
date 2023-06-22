@@ -90,17 +90,14 @@ void rom_correct_checksum(Rom* rom) {
   }
 
   int checksum = sum & 0xFFFF;
-  char checksum_data[2];
-  checksum_data[1] = (checksum & 0xFF00) >> 8;
-  checksum_data[0] = checksum & 0xFF;
-
   int inverse = checksum ^ 0xFFFF;
-  char inverse_data[2];
-  inverse_data[1] = (inverse & 0xFF00) >> 8;
-  inverse_data[0] = inverse & 0xFF;
+  char checksum_data[4];
+  checksum_data[0] = inverse & 0xFF;
+  checksum_data[1] = (inverse & 0xFF00) >> 8;
+  checksum_data[2] = checksum & 0xFF;
+  checksum_data[3] = (checksum & 0xFF00) >> 8;
 
-  rom_write(rom, 0x7FDC, inverse_data, 2);
-  rom_write(rom, 0x7FDE, checksum_data, 2);
+  rom_write(rom, 0x7FDC, checksum_data, 4);
 }
 
 void rom_save (Rom* rom, char* output_path) {
