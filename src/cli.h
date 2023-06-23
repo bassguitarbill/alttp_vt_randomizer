@@ -4,9 +4,37 @@
 #include <stdbool.h>
 #include "./rom.h"
 
+enum Cli {
+  UNRANDOMIZED = 1,
+  SPOILER,
+  HEARTBEEP,
+  HEARTCOLOR,
+  SKIP_MD5,
+  TOURNAMENT,
+  BULK,
+  SPRITE,
+  NO_ROM,
+  NO_MUSIC,
+  MENU_SPEED,
+  GOAL,
+  STATE,
+  WEAPONS,
+  GLITCHES,
+  CRYSTALS_GANON,
+  CRYSTALS_TOWER,
+  ITEM_PLACEMENT,
+  DUNGEON_ITEMS,
+  ACCESSIBILITY,
+  HINTS,
+  ITEM_POOL,
+  ITEM_FUNCTIONALITY,
+  QUICKSWAP
+};
+
 typedef struct {
   char* input_file;
   char* output_directory;
+  bool unrandomized;
   bool spoiler;
   char* heartbeep;
   char* heartcolor;
