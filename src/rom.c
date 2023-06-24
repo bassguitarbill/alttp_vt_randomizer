@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "./rom.h"
+#include "./md5.h"
 
 #define streq(x, y) (0 == strcmp(x, y))
-#define ROM_SIZE 2097152
 
 void rom_write(Rom* rom, int offset, unsigned char data[], int data_size) {
   fseek(rom->tmp_file, offset, SEEK_SET);
@@ -42,6 +43,17 @@ Rom* construct_rom(char* source_location) {
   text_remove_unwanted(rom->text);
   rom->initial_sram = construct_initial_sram();
   return rom;
+}
+
+bool rom_check_md5(Rom* rom) {
+  char* md5 = md5_from_file(rom->tmp_file);
+  bool result = strcmp(md5, ROM_HASH) == 0;
+  free(md5);
+  return result;
+}
+
+void rom_resize(Rom* rom) {
+  ftruncate(fileno(rom->tmp_file), ROM_SIZE);
 }
 
 void rom_set_heart_colors(Rom* rom, char* color) {

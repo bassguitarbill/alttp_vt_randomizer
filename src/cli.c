@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include <unistd.h>
 #include "./cli.h"
 
 void cli_arguments_log(CliArguments cli) {
@@ -62,41 +63,110 @@ CliArguments cli_arguments_default() {
   return cli;
 }
 
+char* cli_output_filename_template(CliArguments cli_args) {
+  char* output_filename = malloc(1024);
+  char* output_filename_pattern = "%s/alttpr_%s_%s_%s_%%s.%%s";
+  if (snprintf(output_filename,
+	       1024,
+	       output_filename_pattern,
+	       cli_args.output_directory,
+	       cli_args.glitches,
+	       cli_args.state,
+	       cli_args.goal) >= 1024) {
+    printf("Your filename is just too big!\n");
+    exit(1);
+  }
+
+  return output_filename;
+}
+
+void cli_check_input_file(CliArguments cli_args) {
+  if (access(cli_args.input_file, R_OK) != 0) {
+    printf("Unable to read input file %s\n", cli_args.input_file);
+    exit(1);
+  }
+}
+
+void cli_check_output_directory(CliArguments cli_args) {
+  if (access(cli_args.output_directory, R_OK | W_OK) != 0) {
+    printf("Unable to write to output directory %s\n", cli_args.output_directory);
+    exit(1);
+  }
+}
+
+char* cli_get_heart_color(CliArguments cli_args) {
+  if (strcmp("random", cli_args.heartcolor) != 0) return cli_args.heartcolor;
+  char* colors[] = { "blue", "green", "yellow", "red" };
+  return colors[rand() % 4];
+}
+
 void cli_randomize(CliArguments cli_args) {
-  Rom* rom = construct_rom(cli_args.input_file);
+  /*
 
   rom_set_heart_colors(rom, cli_args.heartcolor);
   rom_set_heart_beep_speed(rom, cli_args.heartbeep);
   rom_set_quick_swap(rom, cli_args.quickswap);
 
   rom_correct_checksum(rom);
+  */
 
-  char output_filename[1024];
-  char* output_filename_pattern = "%s/alttpr_%s_%s_%s_%%s.%%s";
-  if (snprintf(output_filename, sizeof(output_filename), output_filename_pattern,
-	   cli_args.output_directory,
-	   cli_args.glitches,
-	   cli_args.state,
-	       cli_args.goal) >= sizeof(output_filename)) {
-    printf("Your filename is just too big!\n");
-    exit(1);
-  }
-
+  // ini_set('memory_limit', '512M');
+  // initialize hasher
   char* hash = "hash"; // TODO make this a real hash
-  char* rom_suffix = "sfc";
+  // check for stringiness of arguments (useless?)
+  
+  char* filename = cli_output_filename_template(cli_args);
+  cli_check_input_file(cli_args);
+  cli_check_output_directory(cli_args);
 
-  char rom_filename[1024];
-  if (snprintf(rom_filename,
-	       sizeof(rom_filename),
-	       output_filename,
-	       hash,
-	       rom_suffix) >= sizeof(rom_filename)) {
-    printf("Your ROM filename is just too big!\n");
-    exit(1);
+  for (int i = 0; i < cli_args.bulk; i++) {
+    // clear Item and Boss caches
+    Rom* rom = construct_rom(cli_args.input_file);
+    hash = "hash"; // TODO make this a real hash
+
+    if (!cli_args.skip_md5 && !rom_check_md5(rom)) {
+      rom_resize(rom);
+      // apply patch to rom
+    }
+
+    if (!cli_args.skip_md5 && !rom_check_md5(rom)) {
+      printf("MD5 check failed ;)\n");
+      exit(3);
+    }
+
+    rom_set_heart_colors(rom, cli_get_heart_color(cli_args));
+
+    rom_set_heart_colors(rom, cli_args.heartbeep);
+    
+    rom_set_quick_swap(rom, cli_args.quickswap);
+
+    char rom_filename[1024];
+    if (cli_args.unrandomized) {
+      rom_correct_checksum(rom);
+      // TODO don't use sprintf
+      sprintf(rom_filename, "%s/alttp-%s.sfc", cli_args.output_directory, ROM_BUILD);
+      rom_save(rom, rom_filename);
+      printf("ROM saved: %s\n", rom_filename);
+      return; // TODO this exits early if bulk > 1
+    }
+    
+    /*
+    char* rom_suffix = "sfc";
+
+    if (snprintf(rom_filename,
+		 sizeof(rom_filename),
+		 filename,
+		 hash,
+		 rom_suffix) >= sizeof(rom_filename)) {
+      printf("Your ROM filename is just too big!\n");
+      exit(1);
+    }
+
+    printf("Saving ROM to \"%s\"\n", rom_filename);
+    rom_save(rom, rom_filename);
+    */
   }
 
-  printf("Saving ROM to \"%s\"\n", rom_filename);
-  rom_save(rom, rom_filename);
 }
 
 void handle(int argc, char** argv) {
@@ -237,8 +307,6 @@ void handle(int argc, char** argv) {
   cli_args.output_directory = malloc(1 + strlen(argv[optind]));
   strcpy(cli_args.output_directory, argv[optind++]);
 
-  cli_arguments_log(cli_args);
-
-  exit(0);
+  //cli_arguments_log(cli_args);
   cli_randomize(cli_args);
 }
