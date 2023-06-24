@@ -49,8 +49,8 @@ typedef struct {
   char* state;
   char* weapons;
   char* glitches;
-  int crystals_ganon;
-  int crystals_tower;
+  char* crystals_ganon;
+  char* crystals_tower;
   char* item_placement;
   char* dungeon_items;
   char* accessibility;

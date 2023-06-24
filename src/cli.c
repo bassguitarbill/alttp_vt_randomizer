@@ -50,8 +50,8 @@ CliArguments cli_arguments_default() {
   cli.state = "standard";
   cli.weapons = "randomized";
   cli.glitches = "none";
-  cli.crystals_ganon = 7;
-  cli.crystals_tower = 7;
+  cli.crystals_ganon = "7";
+  cli.crystals_tower = "7";
   cli.item_placement = "basic";
   cli.dungeon_items = "standard";
   cli.accessibility = "item";
@@ -100,17 +100,23 @@ char* cli_get_heart_color(CliArguments cli_args) {
   return colors[rand() % 4];
 }
 
+int get_crystals(char* crystals_input) {
+  if (strcmp("random", crystals_input) != 0) return atoi(crystals_input);
+  return rand() % 8;
+}
+
+char* cli_get_logic(CliArguments cli_args) {
+  char* glitches = cli_args.glitches;
+  if (streq(glitches, "none")) return "NoGlitches";
+  if (streq(glitches, "overworld_glitches")) return "OverworldGlitches";
+  if (streq(glitches, "hybrid_major_glitches")) return "HybridMajorGlitches";
+  if (streq(glitches, "major_glitches")) return "MajorGlitches";
+  if (streq(glitches, "no_logic")) return "NoLogic";
+  printf("Invalid argument `glitches`: %s\n", glitches);
+  return "NoGlitches";
+}
+
 void cli_randomize(CliArguments cli_args) {
-  /*
-
-  rom_set_heart_colors(rom, cli_args.heartcolor);
-  rom_set_heart_beep_speed(rom, cli_args.heartbeep);
-  rom_set_quick_swap(rom, cli_args.quickswap);
-
-  rom_correct_checksum(rom);
-  */
-
-  // ini_set('memory_limit', '512M');
   // initialize hasher
   char* hash = "hash"; // TODO make this a real hash
   // check for stringiness of arguments (useless?)
@@ -149,8 +155,21 @@ void cli_randomize(CliArguments cli_args) {
       printf("ROM saved: %s\n", rom_filename);
       return; // TODO this exits early if bulk > 1
     }
+
+    int crystals_ganon = get_crystals(cli_args.crystals_ganon);
+
+    int crystals_tower = get_crystals(cli_args.crystals_tower);
     
-    /*
+    char* logic = cli_get_logic(cli_args);
+
+    // Build the world
+    // Create a randomizer from that world
+    // Randomize it
+    // Write the random stuff to the rom
+
+    rom_mute_music(rom, cli_args.no_music);
+    rom_set_menu_speed(rom, cli_args.menu_speed);
+
     char* rom_suffix = "sfc";
 
     if (snprintf(rom_filename,
@@ -162,9 +181,20 @@ void cli_randomize(CliArguments cli_args) {
       exit(1);
     }
 
-    printf("Saving ROM to \"%s\"\n", rom_filename);
-    rom_save(rom, rom_filename);
-    */
+    if (!cli_args.no_rom) {
+      // do sprite manipulation
+      // do tournament stuff
+
+      rom_correct_checksum(rom);
+      rom_save(rom, rom_filename);
+      printf("ROM saved: %s\n", rom_filename);
+    }
+
+    if (!cli_args.spoiler) {
+      // write spoiler contents to a file
+
+      // printf("Spoiler saved: %s\n", spoiler_file);
+    }
   }
 
 }
@@ -261,10 +291,12 @@ void handle(int argc, char** argv) {
       strcpy(cli_args.glitches, optarg);
       break;
     case CRYSTALS_GANON:
-      cli_args.crystals_ganon = atoi(optarg);
+      cli_args.crystals_ganon = malloc(1 + strlen(optarg));
+      strcpy(cli_args.crystals_ganon, optarg);
       break;
     case CRYSTALS_TOWER:
-      cli_args.crystals_tower = atoi(optarg);
+      cli_args.crystals_tower = malloc(1 + strlen(optarg));
+      strcpy(cli_args.crystals_tower, optarg);
       break;
     case ITEM_PLACEMENT:
       cli_args.item_placement = malloc(1 + strlen(optarg));

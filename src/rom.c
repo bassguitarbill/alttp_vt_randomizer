@@ -6,8 +6,6 @@
 #include "./rom.h"
 #include "./md5.h"
 
-#define streq(x, y) (0 == strcmp(x, y))
-
 void rom_write(Rom* rom, int offset, unsigned char data[], int data_size) {
   fseek(rom->tmp_file, offset, SEEK_SET);
   fwrite(data, 1, data_size, rom->tmp_file);
@@ -108,6 +106,35 @@ void rom_set_quick_swap(Rom* rom, char* enable) {
   char byte = streq("true", enable) ? 0x01 : 0x00;
 
   rom_write(rom, 0x18004B, &byte, 1);
+}
+
+void rom_mute_music(Rom* rom, bool enable) {
+  char byte = enable ? 0x01 : 0x00;
+  rom_write(rom, 0x18021A, &byte, 1);
+}
+
+void rom_set_menu_speed(Rom* rom, char* menu_speed) {
+  bool fast = false;
+  char speed;
+  if (streq("instant", menu_speed)) {
+    speed = 0xE8;
+    fast = true;
+  } else if (streq("fast", menu_speed)) {
+    speed = 0x10;
+    // `fast` is not enabled in fast mode for some reason
+  } else if (streq("slow", menu_speed)) {
+    speed = 0x08;
+  } else {
+    speed = 0x04;
+  }
+
+  char fast_a = fast ? 0x20 : 0x11;
+  char fast_b = fast ? 0x20 : 0x12;
+
+  rom_write(rom, 0x180048, &speed, 1);
+  rom_write(rom, 0x6DD9A, &fast_a, 1);
+  rom_write(rom, 0x6DF2A, &fast_b, 1);
+  rom_write(rom, 0x6E0E9, &fast_b, 1);
 }
 
 void rom_correct_checksum(Rom* rom) {

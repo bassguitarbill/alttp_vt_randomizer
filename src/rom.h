@@ -11,6 +11,8 @@
 #define ROM_BUILD "2023-03-15"
 #define ROM_HASH "29b5b39ee65ddfa94638ba2e020a66cd"
 
+#define streq(x, y) (0 == strcmp(x, y))
+
 /*
  * Wrapper for ROM file
  */
@@ -27,6 +29,8 @@ void rom_resize(Rom* rom);
 void rom_set_heart_colors(Rom* rom, char* color);
 void rom_set_heart_beep_speed(Rom* rom, char* setting);
 void rom_set_quick_swap(Rom* rom, char* enable);
+void rom_mute_music(Rom* rom, bool enable);
+void rom_set_menu_speed(Rom* rom, char* menu_speed);
 void rom_correct_checksum(Rom* rom);
 void rom_save(Rom* rom, char* output_path);
 #else
